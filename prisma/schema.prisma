@@ -1,0 +1,46 @@
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_POSTG")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
+  stock       Int
+  transactions Transaction[] // Relación uno a muchos (un producto puede tener muchas transacciones)
+}
+
+model Transaction {
+  id             Int              @id @default(autoincrement())
+  productId      Int
+  quantity       Int
+  customerName   String
+  customerAddress String
+  amount         Float
+  status         TransactionStatus
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  product        Product          @relation(fields: [productId], references: [id])
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+  createdAt DateTime @default(now())
+}
