@@ -28,6 +28,7 @@ export class TransactionService {
         status: TransactionStatus.PENDING, // Correcto
       },
     });
+    console.log(transaction,"1");    
 
     // Llamada a Wompi para generar un token de tarjeta
     const cardToken = await this.createCardToken(data);
@@ -38,7 +39,7 @@ export class TransactionService {
       cardToken,
       data,
     );
-    console.log(result);
+    console.log(JSON.stringify(result),"2");
 
     // Actualizar el estado de la transacción según la respuesta de Wompi
     if (result) {
@@ -52,14 +53,19 @@ export class TransactionService {
         TransactionStatus.CANCELLED,
       );
     }
-    return [transaction, result];
+    if (result.error) {
+      return {error:result.error}
+    }
+    return { ...transaction, ...result };
+
   }
 
 
   // Función para crear el token de la tarjeta en Wompi
   private async createCardToken(payload) {
+    
     const expirationDate = payload.expirationDate;
-    const [expMonth, expYear] = expirationDate.split('/');
+    const [expMonth, expYear] = expirationDate.split('/');    
     const res = await fetch(
       'https://api-sandbox.co.uat.wompi.dev/v1/tokens/cards',
       {
@@ -78,6 +84,9 @@ export class TransactionService {
       },
     );
     const data = await res.json();
+    if (data.error) {
+      return {error:data.error}
+    }
     return { token: data.data.id, expires_at: data.data.expires_at };
   }
 

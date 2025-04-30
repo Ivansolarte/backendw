@@ -11,15 +11,13 @@ export class TransactionController {
 
     @Post()
     create(@Body() createTransactionDto: CreateTransactionDto) {
-      // Asignar 'PENDING' a status si no está presente
+    
       const transaction = {
         ...createTransactionDto,
-        status: createTransactionDto.status || 'PENDING', // Si status no es enviado, asignar 'PENDING'
+        status: createTransactionDto.status || 'PENDING',
       };
-    //   console.log(createTransactionDto);
-      
-  
-    //   return createTransactionDto
+      console.log(createTransactionDto);
+   
       return this.transactionService.createTransaction(transaction);
     }
 
