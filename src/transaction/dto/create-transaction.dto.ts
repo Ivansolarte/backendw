@@ -22,7 +22,7 @@ export class CreateTransactionDto {
   quantity: number;
 
   @IsEnum(TransactionStatus)
-  status: TransactionStatus; // Aquí está la validación para 'status'
+  status: TransactionStatus;
   cardNumber: string;
   expirationDate: string;
   cvv: string;

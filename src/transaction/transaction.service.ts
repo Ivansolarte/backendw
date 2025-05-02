@@ -7,6 +7,7 @@ import { TransactionStatus } from '@prisma/client';
 export class TransactionService {
   constructor(private prisma: PrismaService) {}
 
+  // crea una transaccion mas wompi
   async createTransaction(data: CreateTransactionDto) {
     const product = await this.prisma.product.findUnique({
       where: { id: data.productId },
@@ -14,7 +15,7 @@ export class TransactionService {
 
     if (!product) {
       throw new Error('Producto no encontrado');
-    }   
+    }
 
     const amount = product.price * data.quantity;
 
@@ -28,18 +29,16 @@ export class TransactionService {
         status: TransactionStatus.PENDING, // Correcto
       },
     });
-    console.log(transaction,"1");    
 
-    // Llamada a Wompi para generar un token de tarjeta
+    // Llamada a Wompi para generar un token
     const cardToken = await this.createCardToken(data);
 
-    // Enviar a Wompi para procesar el pago real
+    // Enviar a Wompi para procesar el pago
     const result = await this.processPaymentWithWompi(
       transaction.id,
       cardToken,
       data,
     );
-    console.log(JSON.stringify(result),"2");
 
     // Actualizar el estado de la transacción según la respuesta de Wompi
     if (result) {
@@ -54,18 +53,15 @@ export class TransactionService {
       );
     }
     if (result.error) {
-      return {error:result.error}
+      return { error: result.error };
     }
     return { ...transaction, ...result };
-
   }
 
-
-  // Función para crear el token de la tarjeta en Wompi
+  // crear el token de  Wompi
   private async createCardToken(payload) {
-    
     const expirationDate = payload.expirationDate;
-    const [expMonth, expYear] = expirationDate.split('/');    
+    const [expMonth, expYear] = expirationDate.split('/');
     const res = await fetch(
       'https://api-sandbox.co.uat.wompi.dev/v1/tokens/cards',
       {
@@ -75,33 +71,30 @@ export class TransactionService {
           Authorization: 'Bearer pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7',
         },
         body: JSON.stringify({
-          number: payload.cardNumber, // número de prueba válido
+          number: payload.cardNumber,
           cvc: payload.cvv,
           exp_month: expMonth,
-          exp_year: expYear, // solo dos dígitos
-          card_holder: payload.customerName, // al menos 5 caracteres
+          exp_year: expYear,
+          card_holder: payload.customerName,
         }),
       },
     );
     const data = await res.json();
     if (data.error) {
-      return {error:data.error}
+      return { error: data.error };
     }
     return { token: data.data.id, expires_at: data.data.expires_at };
   }
 
-  // Función para procesar el pago real en Wompi
+  //  para procesar el pago real en Wompi
   private async processPaymentWithWompi(
     transactionId: number,
     cardToken: any,
     payload: any,
   ) {
-    console.log(payload);
-    console.log(cardToken);
-    
     const cardDetails = {
       acceptance_token: payload.acceptance_token,
-      amount_in_cents: Math.round(payload.amount_in_cents * 100) ,
+      amount_in_cents: Math.round(payload.amount_in_cents * 100),
       currency: payload.currency,
       customer_email: payload.email,
       reference: payload.reference.replace(/[^a-zA-Z0-9]/g, ''),
@@ -133,14 +126,13 @@ export class TransactionService {
     const data = await response.json();
     return data;
   }
-  
 
   async simulatePayment(transactionId: number) {
-    const delay = Math.random() * 2000 + 1000; // Retraso aleatorio entre 1-3 segundos
+    const delay = Math.random() * 2000 + 1000;
 
     return new Promise((resolve) => {
       setTimeout(async () => {
-        const paymentSuccessful = Math.random() > 0.5; // 50% de probabilidad
+        const paymentSuccessful = Math.random() > 0.5;
 
         let updatedStatus: TransactionStatus = TransactionStatus.CANCELLED;
         let successMessage = 'Pago fallido';
@@ -195,7 +187,7 @@ export class TransactionService {
     await this.prisma.transaction.update({
       where: { id },
       data: {
-        status: status, // Usar TransactionStatus correctamente
+        status: status,
       },
     });
   }
